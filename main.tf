@@ -6,8 +6,10 @@ locals {
 }
 
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 locals {
   account_id = data.aws_caller_identity.current.account_id
+  region = data.aws_region.current.name
 }
 
 resource "aws_s3_bucket" "this" {
@@ -154,14 +156,10 @@ resource "aws_s3_bucket_policy" "this" {
   policy = data.aws_iam_policy_document.bucket_policy[0].json
 }
 
-resource "aws_sns_topic" "this" {
-  count = local.enable_sns_topic ? 1 : 0
 
-  name = "${var.local_prefix}-${var.name}-s3"
-}
 locals {
-  topic_name = concat(aws_sns_topic.this.*.name, [""])[0]
-  topic_arn = concat(aws_sns_topic.this.*.arn, [""])[0]
+  topic_name = local.enable_sns_topic ? "${var.local_prefix}-${var.name}-s3" : ""
+  topic_arn  = local.enable_sns_topic ? "arn:aws:sns:${local.region}:${local.account_id}:${local.topic_name}" : ""
 }
 
 data "aws_iam_policy_document" "sns_policy_base" {
@@ -216,23 +214,6 @@ data "aws_iam_policy_document" "sns_policy_protect" {
       identifiers = ["*"]
     }
   }
-  statement {
-    sid    = "protect_policy"
-    effect = "Deny"
-    resources = [local.topic_arn]
-    actions = [
-      # Unfortunately, we cannot only prevent deletion of the topic policy.
-      # Hence, we prevent any modifications - but only to Drone role (comment below)
-      "sns:SetTopicAttributes",
-    ]
-    principals {
-      type = "AWS"
-
-      # This prevents us from accidentally changing the topic policy via Drone
-      # but still allows manual changes via console / cli
-      identifiers = ["arn:aws:iam::${local.account_id}:role/drone-infra"]
-    }
-  }
 }
 
 data "aws_iam_policy_document" "sns_policy_merge_1" {
@@ -264,9 +245,10 @@ data "aws_iam_policy_document" "sns_policy" {
   )
 }
 
-resource "aws_sns_topic_policy" "this" {
-  count  = local.enable_sns_topic ? 1 : 0
-  arn    = local.topic_arn
+resource "aws_sns_topic" "this" {
+  count = local.enable_sns_topic ? 1 : 0
+
+  name = local.topic_name
   policy = data.aws_iam_policy_document.sns_policy[0].json
 }
 
