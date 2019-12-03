@@ -42,8 +42,3 @@ variable "protect" {
   description = "Whether to protect the bucket (and the SNS topic if created) from deletion"
   default     = false
 }
-
-variable "account_id" {
-  description = "AWS account ID. Only needed if sns_topic = true AND protect = true"
-  default     = ""
-}

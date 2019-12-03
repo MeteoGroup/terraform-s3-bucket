@@ -5,6 +5,11 @@ locals {
   enable_protect           = var.enabled && var.protect
 }
 
+data "aws_caller_identity" "current" {}
+locals {
+  account_id = data.aws_caller_identity.current.account_id
+}
+
 resource "aws_s3_bucket" "this" {
   count = var.enabled ? 1 : 0
 
@@ -225,7 +230,7 @@ data "aws_iam_policy_document" "sns_policy_protect" {
 
       # This prevents us from accidentally changing the topic policy via Drone
       # but still allows manual changes via console / cli
-      identifiers = ["arn:aws:iam::${var.account_id}:role/drone-infra"]
+      identifiers = ["arn:aws:iam::${local.account_id}:role/drone-infra"]
     }
   }
 }

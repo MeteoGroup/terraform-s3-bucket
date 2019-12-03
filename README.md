@@ -49,7 +49,3 @@ to transition / expire old objects in the bucket
 Whether to protect the bucket (and the SNS topic if created) from deletion
 by creating a restrictive
 [bucket policy](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/add-bucket-policy.html)
-
-`account_id`\
-AWS account number where the Terraform run is authenticated in.
-Only needed if `sns_topic = true` AND `protect = true`
