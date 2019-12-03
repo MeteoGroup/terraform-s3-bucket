@@ -1,5 +1,5 @@
 output "id" {
-  value = local.bucket_name
+  value = local.bucket_id
 }
 
 output "arn" {

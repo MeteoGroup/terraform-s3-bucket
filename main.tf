@@ -5,8 +5,8 @@ locals {
   enable_protect           = var.enabled && var.protect
 }
 
-resource "aws_s3_bucket" "protected" {
-  count = var.enabled && local.enable_protect ? 1 : 0
+resource "aws_s3_bucket" "this" {
+  count = var.enabled ? 1 : 0
 
   bucket = "${var.global_prefix}-${var.name}"
   region = var.region
@@ -41,71 +41,10 @@ resource "aws_s3_bucket" "protected" {
       }
     }
   }
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
-
-resource "aws_s3_bucket" "unprotected" {
-  count = var.enabled && local.enable_protect == false ? 1 : 0
-
-  bucket = "${var.global_prefix}-${var.name}"
-  region = var.region
-  tags   = var.tags
-  versioning {
-    enabled = var.versioning
-  }
-  force_destroy = true
-  request_payer = "BucketOwner"
-
-  dynamic "lifecycle_rule" {
-    for_each = var.lifecycle_rules
-    content {
-      enabled = lifecycle_rule.value.enabled
-      id      = lifecycle_rule.value.id
-      prefix  = lookup(lifecycle_rule.value, "prefix", null)
-      tags    = lookup(lifecycle_rule.value, "tags", null)
-
-      dynamic "expiration" {
-        for_each = lookup(lifecycle_rule.value, "expiration", [])
-        content {
-          days = expiration.value.days
-        }
-      }
-
-      dynamic "transition" {
-        for_each = lookup(lifecycle_rule.value, "transition", [])
-        content {
-          days          = transition.value.days
-          storage_class = transition.value.storage_class
-        }
-      }
-    }
-  }
-
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-
 locals {
-  bucket_name = element(
-    concat(
-      aws_s3_bucket.protected.*.id,
-      aws_s3_bucket.unprotected.*.id,
-      [""],
-    ),
-    0,
-  )
-  bucket_arn = element(
-    concat(
-      aws_s3_bucket.protected.*.arn,
-      aws_s3_bucket.unprotected.*.arn,
-      [""],
-    ),
-    0,
-  )
+  bucket_id = concat(aws_s3_bucket.this.*.id, [""])[0]
+  bucket_arn = concat(aws_s3_bucket.this.*.arn, [""])[0]
 }
 
 data "aws_iam_policy_document" "bucket_policy_read" {
@@ -207,47 +146,18 @@ data "aws_iam_policy_document" "bucket_policy" {
 resource "aws_s3_bucket_policy" "this" {
   count = local.enable_bucket_policy ? 1 : 0
 
-  bucket = local.bucket_name
+  bucket = local.bucket_id
   policy = data.aws_iam_policy_document.bucket_policy[0].json
 }
 
-resource "aws_sns_topic" "protected" {
-  count = local.enable_sns_topic && local.enable_protect ? 1 : 0
+resource "aws_sns_topic" "this" {
+  count = local.enable_sns_topic ? 1 : 0
 
   name = "${var.local_prefix}-${var.name}-s3"
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
-
-resource "aws_sns_topic" "unprotected" {
-  count = local.enable_sns_topic && local.enable_protect == false ? 1 : 0
-
-  name = "${var.local_prefix}-${var.name}-s3"
-
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-
 locals {
-  sns_topic_name = element(
-    concat(
-      aws_sns_topic.protected.*.name,
-      aws_sns_topic.unprotected.*.name,
-      [""],
-    ),
-    0,
-  )
-  sns_topic_arn = element(
-    concat(
-      aws_sns_topic.protected.*.arn,
-      aws_sns_topic.unprotected.*.arn,
-      [""],
-    ),
-    0,
-  )
+  topic_name = concat(aws_sns_topic.this.*.name, [""])[0]
+  topic_arn = concat(aws_sns_topic.this.*.arn, [""])[0]
 }
 
 data "aws_iam_policy_document" "sns_policy_base" {
@@ -255,7 +165,7 @@ data "aws_iam_policy_document" "sns_policy_base" {
 
   statement {
     sid = "publish"
-    resources = [local.sns_topic_arn]
+    resources = [local.topic_arn]
     actions   = ["sns:Publish"]
     principals {
       type        = "Service"
@@ -274,7 +184,7 @@ data "aws_iam_policy_document" "sns_policy_cross_account" {
 
   statement {
     sid = "subscribe"
-    resources = [local.sns_topic_arn]
+    resources = [local.topic_arn]
     actions = [
       "sns:Subscribe",
       "sns:GetTopicAttributes",
@@ -293,7 +203,7 @@ data "aws_iam_policy_document" "sns_policy_protect" {
   statement {
     sid    = "protect_topic"
     effect = "Deny"
-    resources = [local.sns_topic_arn]
+    resources = [local.topic_arn]
     actions = [
       "sns:DeleteTopic",
     ]
@@ -305,7 +215,7 @@ data "aws_iam_policy_document" "sns_policy_protect" {
   statement {
     sid    = "protect_policy"
     effect = "Deny"
-    resources = [local.sns_topic_arn]
+    resources = [local.topic_arn]
     actions = [
       # Unfortunately, we cannot only prevent deletion of the topic policy.
       # Hence, we prevent any modifications - but only to Drone role (comment below)
@@ -352,18 +262,17 @@ data "aws_iam_policy_document" "sns_policy" {
 
 resource "aws_sns_topic_policy" "this" {
   count  = local.enable_sns_topic ? 1 : 0
-  arn    = local.sns_topic_arn
+  arn    = local.topic_arn
   policy = data.aws_iam_policy_document.sns_policy[0].json
 }
 
 resource "aws_s3_bucket_notification" "this" {
   count  = local.enable_sns_topic ? 1 : 0
-  bucket = local.bucket_name
+  bucket = local.bucket_id
 
   topic {
-    id        = local.sns_topic_name
-    topic_arn = local.sns_topic_arn
+    id        = local.topic_name
+    topic_arn = local.topic_arn
     events    = ["s3:ObjectCreated:*"]
   }
 }
-
