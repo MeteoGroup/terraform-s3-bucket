@@ -12,6 +12,9 @@ locals {
   region = data.aws_region.current.name
 }
 
+
+##########  The S3 bucket  ##########
+
 resource "aws_s3_bucket" "this" {
   count = var.enabled ? 1 : 0
 
@@ -52,6 +55,9 @@ locals {
   bucket_id = concat(aws_s3_bucket.this.*.id, [""])[0]
   bucket_arn = concat(aws_s3_bucket.this.*.arn, [""])[0]
 }
+
+
+##########  S3 Bucket policy  ##########
 
 data "aws_iam_policy_document" "bucket_policy_read" {
   count = local.enable_read_accounts ? 1 : 0
@@ -157,6 +163,8 @@ resource "aws_s3_bucket_policy" "this" {
 }
 
 
+##########  SNS topic for notifications  ##########
+
 locals {
   topic_name = local.enable_sns_topic ? "${var.local_prefix}-${var.name}-s3" : ""
   topic_arn  = local.enable_sns_topic ? "arn:aws:sns:${local.region}:${local.account_id}:${local.topic_name}" : ""
@@ -251,6 +259,9 @@ resource "aws_sns_topic" "this" {
   name = local.topic_name
   policy = data.aws_iam_policy_document.sns_policy[0].json
 }
+
+
+#####  S3 notifications -> SNS topic
 
 resource "aws_s3_bucket_notification" "this" {
   count  = local.enable_sns_topic ? 1 : 0
