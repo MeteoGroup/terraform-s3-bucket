@@ -37,7 +37,7 @@ Whether to create an [SNS topic](https://docs.aws.amazon.com/sns/latest/dg/welco
 and [publish S3 object creations](https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
 to it
 
-`readonly_accounts` (list(str))\
+`read_accounts` (list(str))\
 Account numbers of other AWS accounts which should get read access to the bucket -
 and *subscribe* access to its SNS topic
 

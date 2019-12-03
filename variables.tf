@@ -23,8 +23,8 @@ variable "sns_topic" {
   default     = false
 }
 
-variable "readonly_accounts" {
-  description = "List of other AWS accounts which should get read-only access to the bucket - and subscribe access to its SNS topic"
+variable "read_accounts" {
+  description = "List of other AWS accounts which should get read access to the bucket - and subscribe access to its SNS topic"
   type        = list(string)
   default     = []
 }

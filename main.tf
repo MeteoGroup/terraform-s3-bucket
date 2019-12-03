@@ -1,6 +1,6 @@
 locals {
   enable_sns_topic         = var.enabled && var.sns_topic
-  enable_readonly_accounts = var.enabled && length(var.readonly_accounts) > 0
+  enable_read_accounts     = var.enabled && length(var.read_accounts) > 0
   enable_write_accounts    = var.enabled && length(var.write_accounts) > 0
   enable_protect           = var.enabled && var.protect
 }
@@ -48,7 +48,7 @@ locals {
 }
 
 data "aws_iam_policy_document" "bucket_policy_read" {
-  count = local.enable_readonly_accounts ? 1 : 0
+  count = local.enable_read_accounts ? 1 : 0
 
   statement {
     sid = "read"
@@ -62,7 +62,7 @@ data "aws_iam_policy_document" "bucket_policy_read" {
     ]
     principals {
       type        = "AWS"
-      identifiers = var.readonly_accounts
+      identifiers = var.read_accounts
     }
   }
 }
@@ -105,11 +105,11 @@ data "aws_iam_policy_document" "bucket_policy_protect" {
 }
 
 locals {
-  enable_bucket_policy = local.enable_readonly_accounts || local.enable_write_accounts || local.enable_protect
+  enable_bucket_policy = local.enable_read_accounts || local.enable_write_accounts || local.enable_protect
 }
 
 data "aws_iam_policy_document" "bucket_policy_read_write" {
-  count = local.enable_readonly_accounts || local.enable_write_accounts ? 1 : 0
+  count = local.enable_read_accounts || local.enable_write_accounts ? 1 : 0
 
   source_json = element(
     concat(data.aws_iam_policy_document.bucket_policy_read.*.json, [""]),
@@ -180,7 +180,7 @@ data "aws_iam_policy_document" "sns_policy_base" {
 }
 
 data "aws_iam_policy_document" "sns_policy_cross_account" {
-  count = local.enable_sns_topic && local.enable_readonly_accounts ? 1 : 0
+  count = local.enable_sns_topic && local.enable_read_accounts ? 1 : 0
 
   statement {
     sid = "subscribe"
@@ -192,7 +192,7 @@ data "aws_iam_policy_document" "sns_policy_cross_account" {
     ]
     principals {
       type        = "AWS"
-      identifiers = var.readonly_accounts
+      identifiers = var.read_accounts
     }
   }
 }
