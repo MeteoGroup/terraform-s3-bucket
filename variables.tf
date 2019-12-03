@@ -1,7 +1,8 @@
 variable "enabled" {
   # Remove this when https://github.com/hashicorp/terraform/issues/953 is solved
   description = "If set to false, the module will do nothing. This exists because there can be no `count` meta-parameter for a module"
-  default     = "true"
+  type        = bool
+  default     = true
 }
 
 variable "local_prefix" {}
@@ -13,11 +14,13 @@ variable "tags" {
 }
 
 variable "versioning" {
-  default = "false"
+  type    = bool
+  default = false
 }
 
 variable "sns_topic" {
   description = "Whether to create an SNS topic and publish S3 object creations to it"
+  type        = bool
   default     = false
 }
 
@@ -34,11 +37,12 @@ variable "write_accounts" {
 }
 
 variable "lifecycle_rules" {
-  type    = list(string)
+  type    = list(map(any))
   default = []
 }
 
 variable "protect" {
   description = "Whether to protect the bucket (and the SNS topic if created) from deletion"
+  type        = bool
   default     = false
 }
