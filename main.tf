@@ -63,7 +63,7 @@ data "aws_iam_policy_document" "bucket_policy_read" {
   count = local.enable_read_accounts ? 1 : 0
 
   statement {
-    sid = "read"
+    sid = "AllowCrossAccountRead"
     resources = [
       local.bucket_arn,
       "${local.bucket_arn}/*",
@@ -83,7 +83,7 @@ data "aws_iam_policy_document" "bucket_policy_write" {
   count = local.enable_write_accounts ? 1 : 0
 
   statement {
-    sid = "write"
+    sid = "AllowCrossAccountWrite"
     resources = [
       local.bucket_arn,
       "${local.bucket_arn}/*",
@@ -102,7 +102,7 @@ data "aws_iam_policy_document" "bucket_policy_protect" {
   count = local.enable_protect ? 1 : 0
 
   statement {
-    sid    = "protect"
+    sid    = "DenyDeletion"
     effect = "Deny"
     resources = [local.bucket_arn]
     actions = [
@@ -174,7 +174,7 @@ data "aws_iam_policy_document" "sns_policy_base" {
   count = local.enable_sns_topic ? 1 : 0
 
   statement {
-    sid = "publish"
+    sid = "AllowPublishFromS3Bucket"
     resources = [local.topic_arn]
     actions   = ["sns:Publish"]
     principals {
@@ -193,7 +193,7 @@ data "aws_iam_policy_document" "sns_policy_cross_account" {
   count = local.enable_sns_topic && local.enable_read_accounts ? 1 : 0
 
   statement {
-    sid = "subscribe"
+    sid = "AllowCrossAccountSubscribe"
     resources = [local.topic_arn]
     actions = [
       "sns:Subscribe",
@@ -211,7 +211,7 @@ data "aws_iam_policy_document" "sns_policy_protect" {
   count = local.enable_sns_topic && local.enable_protect ? 1 : 0
 
   statement {
-    sid    = "protect_topic"
+    sid    = "DenyDeletion"
     effect = "Deny"
     resources = [local.topic_arn]
     actions = [
