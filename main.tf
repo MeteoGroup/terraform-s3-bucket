@@ -256,7 +256,9 @@ data "aws_iam_policy_document" "sns_policy" {
 resource "aws_sns_topic" "this" {
   count = local.enable_sns_topic ? 1 : 0
 
-  name = local.topic_name
+  name   = local.topic_name
+  tags   = var.tags
+
   policy = data.aws_iam_policy_document.sns_policy[0].json
 }
 
