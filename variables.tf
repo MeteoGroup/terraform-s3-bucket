@@ -8,8 +8,6 @@ variable "local_prefix" {}
 variable "global_prefix" {}
 variable "name" {}
 
-variable "region" {}
-
 variable "tags" {
   type = map(string)
 }

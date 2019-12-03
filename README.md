@@ -21,9 +21,6 @@ e.g. `mg-manta-staging`
 `name`\
 Name of the bucket (excluding the *global_prefix*)
 
-`region` (*deprecated*)\
-AWS region for the bucket
-
 `tags` (map)\
 Additional tags to add to each created resource
 

@@ -9,7 +9,6 @@ resource "aws_s3_bucket" "this" {
   count = var.enabled ? 1 : 0
 
   bucket = "${var.global_prefix}-${var.name}"
-  region = var.region
   tags   = var.tags
   versioning {
     enabled = var.versioning
