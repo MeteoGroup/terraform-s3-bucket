@@ -1,4 +1,5 @@
 variable "enabled" {
+  # Remove this when https://github.com/hashicorp/terraform/issues/953 is solved
   description = "If set to false, the module will do nothing. This exists because there can be no `count` meta-parameter for a module"
   default     = "true"
 }
