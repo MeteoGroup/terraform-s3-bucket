@@ -37,7 +37,7 @@ variable "write_accounts" {
 }
 
 variable "lifecycle_rules" {
-  type    = list(map(any))
+  type    = list(any)
   default = []
 }
 
