@@ -120,39 +120,18 @@ locals {
   enable_bucket_policy = local.enable_read_accounts || local.enable_write_accounts || local.enable_protect
 }
 
-data "aws_iam_policy_document" "bucket_policy_read_write" {
+data "aws_iam_policy_document" "bucket_policy_read_and_write" {
   count = local.enable_read_accounts || local.enable_write_accounts ? 1 : 0
 
-  source_json = element(
-    concat(data.aws_iam_policy_document.bucket_policy_read.*.json, [""]),
-    0,
-  )
-  override_json = element(
-    concat(
-      data.aws_iam_policy_document.bucket_policy_write.*.json,
-      [""],
-    ),
-    0,
-  )
+  source_json   = concat(data.aws_iam_policy_document.bucket_policy_read.*.json, [""])[0]
+  override_json = concat(data.aws_iam_policy_document.bucket_policy_write.*.json, [""])[0]
 }
 
 data "aws_iam_policy_document" "bucket_policy" {
   count = local.enable_bucket_policy ? 1 : 0
 
-  source_json = element(
-    concat(
-      data.aws_iam_policy_document.bucket_policy_read_write.*.json,
-      [""],
-    ),
-    0,
-  )
-  override_json = element(
-    concat(
-      data.aws_iam_policy_document.bucket_policy_protect.*.json,
-      [""],
-    ),
-    0,
-  )
+  source_json   = concat(data.aws_iam_policy_document.bucket_policy_read_and_write.*.json, [""])[0]
+  override_json = concat(data.aws_iam_policy_document.bucket_policy_protect.*.json, [""])[0]
 }
 
 resource "aws_s3_bucket_policy" "this" {
@@ -224,33 +203,18 @@ data "aws_iam_policy_document" "sns_policy_protect" {
   }
 }
 
-data "aws_iam_policy_document" "sns_policy_merge_1" {
+data "aws_iam_policy_document" "sns_policy_base_and_cross_account" {
   count = local.enable_sns_topic ? 1 : 0
 
-  source_json = element(
-    concat(data.aws_iam_policy_document.sns_policy_base.*.json, [""]),
-    0,
-  )
-  override_json = element(
-    concat(
-      data.aws_iam_policy_document.sns_policy_cross_account.*.json,
-      [""],
-    ),
-    0,
-  )
+  source_json   = concat(data.aws_iam_policy_document.sns_policy_base.*.json, [""])[0]
+  override_json = concat(data.aws_iam_policy_document.sns_policy_cross_account.*.json, [""])[0]
 }
 
 data "aws_iam_policy_document" "sns_policy" {
   count = local.enable_sns_topic ? 1 : 0
 
-  source_json = element(
-    concat(data.aws_iam_policy_document.sns_policy_merge_1.*.json, [""]),
-    0,
-  )
-  override_json = element(
-    concat(data.aws_iam_policy_document.sns_policy_protect.*.json, [""]),
-    0,
-  )
+  source_json   = concat(data.aws_iam_policy_document.sns_policy_base_and_cross_account.*.json, [""])[0]
+  override_json = concat(data.aws_iam_policy_document.sns_policy_protect.*.json, [""])[0]
 }
 
 resource "aws_sns_topic" "this" {
