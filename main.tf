@@ -84,10 +84,7 @@ data "aws_iam_policy_document" "bucket_policy_write" {
 
   statement {
     sid = "AllowCrossAccountWrite"
-    resources = [
-      local.bucket_arn,
-      "${local.bucket_arn}/*",
-    ]
+    resources = ["${local.bucket_arn}/${var.write_key_pattern}"]
     actions = [
       "s3:PutObject",
       "s3:PutObjectAcl",

@@ -36,6 +36,12 @@ variable "write_accounts" {
   default     = []
 }
 
+variable "write_key_pattern" {
+  description = "Pattern of object keys allowed for cross-account writes"
+  type        = string
+  default     = "*"
+}
+
 variable "lifecycle_rules" {
   type    = list(any)
   default = []
