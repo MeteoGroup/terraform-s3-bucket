@@ -41,6 +41,9 @@ and *subscribe* access to its SNS topic
 `write_accounts` (list(str))\
 Account numbers of other AWS accounts which should get write access to the bucket
 
+`write_key_pattern` (str)\
+Pattern of object keys allowed for cross-account writes
+
 `lifecycle_rules` (list(lifecycle_rule))\
 [Lifecycle rules](https://www.terraform.io/docs/providers/aws/r/s3_bucket.html#lifecycle_rule)
 to transition / expire old objects in the bucket

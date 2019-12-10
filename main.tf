@@ -84,16 +84,19 @@ data "aws_iam_policy_document" "bucket_policy_write" {
 
   statement {
     sid = "AllowCrossAccountWrite"
-    resources = [
-      local.bucket_arn,
-      "${local.bucket_arn}/*",
-    ]
+    resources = ["${local.bucket_arn}/${var.write_key_pattern}"]
     actions = [
-      "s3:Put*",
+      "s3:PutObject",
+      "s3:PutObjectAcl",
     ]
     principals {
       type        = "AWS"
       identifiers = var.write_accounts
+    }
+    condition {
+      test = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values = ["bucket-owner-full-control"]
     }
   }
 }
