@@ -63,15 +63,23 @@ data "aws_iam_policy_document" "bucket_policy_read" {
   count = local.enable_read_accounts ? 1 : 0
 
   statement {
-    sid = "AllowCrossAccountRead"
-    resources = [
-      local.bucket_arn,
-      "${local.bucket_arn}/*",
-    ]
-    actions = [
-      "s3:Get*",
-      "s3:List*",
-    ]
+    sid = "AllowCrossAccountList"
+    resources = [local.bucket_arn]
+    actions = ["s3:List*"]
+    principals {
+      type        = "AWS"
+      identifiers = var.read_accounts
+    }
+    condition {
+      test = "StringLike"
+      variable = "s3:prefix"
+      values = ["${var.read_prefix}*"]
+    }
+  }
+  statement {
+    sid = "AllowCrossAccountGet"
+    resources = ["${local.bucket_arn}/${var.read_prefix}*",]
+    actions = ["s3:Get*"]
     principals {
       type        = "AWS"
       identifiers = var.read_accounts

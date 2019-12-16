@@ -30,6 +30,12 @@ variable "read_accounts" {
   default     = []
 }
 
+variable "read_prefix" {
+  description = "Prefix of object keys to restrict cross-account reads to"
+  type        = string
+  default     = ""
+}
+
 variable "write_accounts" {
   description = "List of other AWS accounts which should get write access to the bucket"
   type        = list(string)
