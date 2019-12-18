@@ -26,6 +26,13 @@ resource "aws_s3_bucket" "this" {
   force_destroy = true
   request_payer = "BucketOwner"
 
+  dynamic "website" {
+    for_each = var.enable_website ? [{index_document = "index.html"}] : []
+    content {
+      index_document = website.value.index_document
+    }
+  }
+
   dynamic "lifecycle_rule" {
     for_each = var.lifecycle_rules
     content {

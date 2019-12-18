@@ -58,3 +58,9 @@ variable "protect" {
   type        = bool
   default     = false
 }
+
+variable "enable_website" {
+  description = "Whether to make the bucket available as a static website"
+  type        = bool
+  default     = false
+}
