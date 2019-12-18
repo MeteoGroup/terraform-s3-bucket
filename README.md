@@ -38,6 +38,9 @@ to it
 Account numbers of other AWS accounts which should get read access to the bucket -
 and *subscribe* access to its SNS topic
 
+`read_prefix` (str)\
+Prefix of object keys to restrict cross-account reads to
+
 `write_accounts` (list(str))\
 Account numbers of other AWS accounts which should get write access to the bucket
 
@@ -52,3 +55,6 @@ to transition / expire old objects in the bucket
 Whether to protect the bucket (and the SNS topic if created) from deletion
 by creating a restrictive
 [bucket policy](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/add-bucket-policy.html)
+
+`enable_website` (bool, Default: `false`)\
+Whether to make the bucket available as a static website
