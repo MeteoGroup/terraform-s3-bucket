@@ -3,6 +3,7 @@ locals {
   enable_read_accounts     = var.enabled && length(var.read_accounts) > 0
   enable_write_accounts    = var.enabled && length(var.write_accounts) > 0
   enable_protect           = var.enabled && var.protect
+  enable_read_with_prefix  = length(var.read_prefix) > 0
 }
 
 data "aws_caller_identity" "current" {}
@@ -67,7 +68,7 @@ locals {
 ##########  S3 Bucket policy  ##########
 
 data "aws_iam_policy_document" "bucket_policy_read" {
-  count = local.enable_read_accounts ? 1 : 0
+  count = local.enable_read_accounts && !local.enable_read_with_prefix ? 1 : 0
 
   statement {
     sid = "AllowCrossAccountList"
@@ -77,15 +78,10 @@ data "aws_iam_policy_document" "bucket_policy_read" {
       type        = "AWS"
       identifiers = var.read_accounts
     }
-    condition {
-      test = "StringLike"
-      variable = "s3:prefix"
-      values = ["${var.read_prefix}*"]
-    }
   }
   statement {
     sid = "AllowCrossAccountGet"
-    resources = ["${local.bucket_arn}/${var.read_prefix}*",]
+    resources = ["${local.bucket_arn}/*",]
     actions = ["s3:Get*"]
     principals {
       type        = "AWS"
