@@ -90,6 +90,34 @@ data "aws_iam_policy_document" "bucket_policy_read" {
   }
 }
 
+data "aws_iam_policy_document" "bucket_policy_read_with_prifix" {
+  count = local.enable_read_accounts && local.enable_read_with_prefix ? 1 : 0
+
+  statement {
+    sid = "AllowCrossAccountList"
+    resources = [local.bucket_arn]
+    actions = ["s3:List*"]
+    principals {
+      type        = "AWS"
+      identifiers = var.read_accounts
+    }
+    condition {
+      test = "StringLike"
+      variable = "s3:prefix"
+      values = ["${var.read_prefix}*"]
+    }
+  }
+  statement {
+    sid = "AllowCrossAccountGet"
+    resources = ["${local.bucket_arn}/${var.read_prefix}*",]
+    actions = ["s3:Get*"]
+    principals {
+      type        = "AWS"
+      identifiers = var.read_accounts
+    }
+  }
+}
+
 data "aws_iam_policy_document" "bucket_policy_write" {
   count = local.enable_write_accounts ? 1 : 0
 
@@ -135,9 +163,16 @@ locals {
 }
 
 data "aws_iam_policy_document" "bucket_policy_read_and_write" {
-  count = local.enable_read_accounts || local.enable_write_accounts ? 1 : 0
+  count = local.enable_read_accounts && !local.enable_read_with_prefix || local.enable_write_accounts ? 1 : 0
 
   source_json   = concat(data.aws_iam_policy_document.bucket_policy_read.*.json, [""])[0]
+  override_json = concat(data.aws_iam_policy_document.bucket_policy_write.*.json, [""])[0]
+}
+
+data "aws_iam_policy_document" "bucket_policy_read_prefix_and_write" {
+  count = local.enable_read_with_prefix || local.enable_write_accounts ? 1 : 0
+
+  source_json   = concat(data.aws_iam_policy_document.bucket_policy_read_with_prifix.*.json, [""])[0]
   override_json = concat(data.aws_iam_policy_document.bucket_policy_write.*.json, [""])[0]
 }
 
