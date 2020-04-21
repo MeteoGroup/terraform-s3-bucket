@@ -77,10 +77,13 @@ data "aws_iam_policy_document" "bucket_policy_read" {
       type        = "AWS"
       identifiers = var.read_accounts
     }
-    condition {
-      test = "StringLike"
-      variable = "s3:prefix"
-      values = ["${var.read_prefix}*"]
+    dynamic "condition" {
+      for_each = length(var.read_prefix) > 0 ? [var.read_prefix] : []
+      content {
+        test = "StringLike"
+        variable = "s3:prefix"
+        values = ["${var.read_prefix}*"]
+      }
     }
   }
   statement {
