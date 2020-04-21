@@ -3,7 +3,6 @@ locals {
   enable_read_accounts     = var.enabled && length(var.read_accounts) > 0
   enable_write_accounts    = var.enabled && length(var.write_accounts) > 0
   enable_protect           = var.enabled && var.protect
-  enable_read_with_prefix  = length(var.read_prefix) > 0
 }
 
 data "aws_caller_identity" "current" {}
@@ -68,7 +67,7 @@ locals {
 ##########  S3 Bucket policy  ##########
 
 data "aws_iam_policy_document" "bucket_policy_read" {
-  count = local.enable_read_accounts && !local.enable_read_with_prefix ? 1 : 0
+  count = local.enable_read_accounts ? 1 : 0
 
   statement {
     sid = "AllowCrossAccountList"
@@ -78,33 +77,13 @@ data "aws_iam_policy_document" "bucket_policy_read" {
       type        = "AWS"
       identifiers = var.read_accounts
     }
-  }
-  statement {
-    sid = "AllowCrossAccountGet"
-    resources = ["${local.bucket_arn}/*",]
-    actions = ["s3:Get*"]
-    principals {
-      type        = "AWS"
-      identifiers = var.read_accounts
-    }
-  }
-}
-
-data "aws_iam_policy_document" "bucket_policy_read_with_prifix" {
-  count = local.enable_read_accounts && local.enable_read_with_prefix ? 1 : 0
-
-  statement {
-    sid = "AllowCrossAccountList"
-    resources = [local.bucket_arn]
-    actions = ["s3:List*"]
-    principals {
-      type        = "AWS"
-      identifiers = var.read_accounts
-    }
-    condition {
-      test = "StringLike"
-      variable = "s3:prefix"
-      values = ["${var.read_prefix}*"]
+    dynamic "condition" {
+      for_each = length(var.read_prefix) > 0 ? [var.read_prefix] : []
+      content {
+        test = "StringLike"
+        variable = "s3:prefix"
+        values = ["${var.read_prefix}*"]
+      }
     }
   }
   statement {
@@ -163,16 +142,9 @@ locals {
 }
 
 data "aws_iam_policy_document" "bucket_policy_read_and_write" {
-  count = local.enable_read_accounts && !local.enable_read_with_prefix || local.enable_write_accounts ? 1 : 0
+  count = local.enable_read_accounts || local.enable_write_accounts ? 1 : 0
 
   source_json   = concat(data.aws_iam_policy_document.bucket_policy_read.*.json, [""])[0]
-  override_json = concat(data.aws_iam_policy_document.bucket_policy_write.*.json, [""])[0]
-}
-
-data "aws_iam_policy_document" "bucket_policy_read_prefix_and_write" {
-  count = local.enable_read_with_prefix || local.enable_write_accounts ? 1 : 0
-
-  source_json   = concat(data.aws_iam_policy_document.bucket_policy_read_with_prifix.*.json, [""])[0]
   override_json = concat(data.aws_iam_policy_document.bucket_policy_write.*.json, [""])[0]
 }
 
